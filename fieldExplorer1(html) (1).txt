@@ -1,0 +1,96 @@
+<template>
+    <lightning-record-edit-form
+object-api-name={objectApiName}
+record-id={recordId}
+>
+
+
+    <!-- <lightning-card class="divSize"> -->
+            <div class="slds-p-top_none" style="text-align: center;"></div>
+
+    <!-- <lightning-layout multiple-rows>-->
+
+    <!--for users-->
+
+            <!--<lightning-layout-item size="2" padding="around-small">
+                                    <lightning-combobox
+                                    name="Users"
+                                    label="Users"
+                                    value=""
+                                    placeholder="Select User"
+                                    options={users}
+                                    onchange={handleUserChange}
+                                    required
+            >
+            </lightning-combobox>
+            </lightning-layout-item>--> 
+
+            <!--for Selecting Object-->
+
+            <lightning-layout-item size="2"  name="comboBox1" padding="500px">
+            <lightning-combobox 
+                    name="objectName" 
+                    label="Object"
+                    value={object1}
+                    placeholder="Select Object"
+                    options={objects} 
+                    onchange={handleObjectChange}
+                    mode="edit"
+                    ></lightning-combobox>
+                    
+    </lightning-layout-item>
+     <!--<p>Current Values: {acc}</P>
+   <p>Field Values : {field1}</P>-->  
+                   
+            <!--for Selecting Fields-->
+
+            <lightning-layout-item size="2" name="comboBox2"  padding="300px">
+                    <lightning-combobox
+                    name="Fields"
+                    label="Fields"
+                    value={field1}
+                    placeholder="Select Field"
+                    options={fieldsB}
+                    onchange={handleFieldChange}
+                    mode="edit"
+                    required
+            ></lightning-combobox> 
+            
+            </lightning-layout-item>
+
+            <lightning-layout-item size="2" name="comboBox3" padding="300px">
+                    <lightning-combobox
+                    name="Email"
+                    label="Emails"
+                    value={email1}
+                    placeholder="Select Email"
+                    options={emails}
+                    onchange={handleEmailChange}
+                    mode="edit"
+                    required
+            ></lightning-combobox> 
+            </lightning-layout-item>
+            <!--  <lightning-layout-item size="4" padding="around-small">
+                    <div class="slds-m-around--medium">
+                    <lightning-button label="Get Users Access" title="Get Users Access" onclick={handleClick}>
+                    </lightning-button>
+                    </div>
+            </lightning-layout-item>-->
+    <!-- </lightning-layout>-->
+
+    <!--</lightning-card>-->
+
+    <!--<lightning-card title="Field Access">
+            <br />
+            <div style="width: auto;">
+                    <lightning-datatable data={data}
+                                    columns={columns}
+                                    key-field="Id">
+                    </lightning-datatable>
+    
+            </div>
+            </lightning-card>-->
+
+</lightning-record-edit-form>
+
+</template>

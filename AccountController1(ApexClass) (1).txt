@@ -1,0 +1,17 @@
+public without sharing class AccountController1 {
+    
+    @AuraEnabled(cacheable = true)
+    public static string  getAccounts(String recordId) {
+        System.debug(recordId);
+        //String recordId;
+        //recordId='a015j0000078xhjAAA';
+        string objname;
+        objname =[SELECT Object__c FROM SchedulePlan__c WHERE Id = :recordId].Object__c;
+           // system.debug(objname);
+          // List<SchedulePlan__c> schedule = new List<SchedulePlan__c>();
+         //List<SchedulePlan__c> schedule = [SELECT Object__c FROM SchedulePlan__c WHERE Id = :recordId].Object__c;
+        system.debug(objname);
+        return objname;
+        //return [SELECT Object__c FROM SchedulePlan__c WHERE Id = :recordId];
+    }
+}

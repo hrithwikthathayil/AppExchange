@@ -1,0 +1,215 @@
+global class FieldExplorerController {
+    
+    //Retrieve All Custom Object in Org
+    @Auraenabled(cacheable=true)
+    global static List<String> getAllCustomSObjects()
+    {
+        List<String> sObjectList = new List<String>();
+        for(Schema.SObjectType objTyp : Schema.getGlobalDescribe().Values())
+        {
+            Schema.DescribeSObjectResult describeSObjectResultObj = objTyp.getDescribe();
+            if(describeSObjectResultObj.isCustom())
+            {
+                String name = objTyp.getDescribe().getName();
+                if(!name.containsignorecase('history') && !name.containsignorecase('tag')&&
+                   !name.containsignorecase('share') && !name.containsignorecase('feed'))
+                {
+                    sObjectList.add(name);
+                }
+            }
+        }
+        system.debug('SObjectList****' + sObjectList);
+        return sObjectList;
+    }
+    
+    //Retrieve All Objects in org
+    @Auraenabled(cacheable=true)
+    public static List<string> getObjects()
+    {
+        
+        List<string> sObjectList = new List<string>();
+        
+        for(Schema.SObjectType objTyp : Schema.getGlobalDescribe().Values()){
+            String name = objTyp.getDescribe().getName();
+            if((!name.containsignorecase('history') && !name.containsignorecase('tag')&&
+                !name.containsignorecase('share') && !name.containsignorecase('feed'))){      
+                    sObjectList.add(name);
+                }
+        }
+        sObjectList.sort();
+        return sObjectList;
+    }
+    
+    //Get All fields of given object with datatype as DATE
+    @Auraenabled(cacheable=true)
+   //@invocableMethod(label = 'Get schedulefield values')
+    public static List<FieldWrap> getFields(String objectName)    
+    {
+        System.debug(objectName);
+        Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe(); 
+        Schema.SObjectType ctype = gd.get(objectName); 
+        Map<String, Schema.SobjectField> fmap = ctype.getDescribe().fields.getMap();   
+        List<FieldWrap> strList = new List<FieldWrap>();
+        for(String fieldName: fmap.keySet()) {
+            FieldWrap wmp = new FieldWrap();
+            wmp.name = fmap.get(fieldName).getDescribe().getName();
+            wmp.label = fmap.get(fieldName).getDescribe().getLabel();
+            
+            Schema.DisplayType fielddataType = fmap.get(fieldName).getDescribe().getType();
+            if(fielddataType==Schema.DisplayType.DATE)
+            {
+                strList.add(wmp); 
+                System.debug(fielddataType);
+            }
+            
+        }
+        return strList;
+    }
+    //Get All fields of given object with datatype as EMAIL
+    @Auraenabled(cacheable=true)
+    public static List<FieldWrap> getEmails(string objectName)
+    {
+        Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe(); 
+        Schema.SObjectType ctype = gd.get(objectName); 
+        Map<String, Schema.SobjectField> fmap = ctype.getDescribe().fields.getMap();   
+        List<FieldWrap> stringList = new List<FieldWrap>();
+        for(String fieldName: fmap.keySet()) {
+            FieldWrap wm = new FieldWrap();
+            wm.name = fmap.get(fieldName).getDescribe().getName();
+            wm.label = fmap.get(fieldName).getDescribe().getLabel();
+            Schema.DisplayType fielddataType = fmap.get(fieldName).getDescribe().getType();
+            if(fielddataType==Schema.DisplayType.EMAIL)
+            {
+                stringList.add(wm); 
+                System.debug(fielddataType);
+            }
+            
+        }
+        return stringList;
+    }
+   
+    ////
+   	
+    ////
+    //Retrieve records based on selected fields and object.
+    @AuraEnabled (cacheable=true)
+    public static List<SObject> retreieveRecords(String objectName, String fields){
+        String strQuery = String.escapeSingleQuotes(fields) + String.escapeSingleQuotes(objectName) 
+                        + 'LIMIT 20000';
+        System.debug(strQuery);
+        return database.query(strQuery);
+        
+        
+    }
+    
+    //retrieve Orgs User
+    @Auraenabled(cacheable=true)
+    public static List<User> getOrgUsers()
+    {
+        return [select id, name from User where isactive = true];
+    }
+    
+    
+    //Get Access of all fields 
+    @Auraenabled(cacheable=true)
+    public static List<FieldAccess> getObjectAccess(string objectName,string userId)
+    {
+        List<FieldAccess> fields=new List<FieldAccess>();
+        
+        //Get DurableId of all fields for given user
+        List<UserFieldAccess> lists=[SELECT Durableid FROM UserFieldAccess
+                                     WHERE FieldDefinition.EntityDefinition.QualifiedApiName=:objectName
+                                     AND User.Id=:userId];
+        
+        List<string> ids=new List<string>(); 
+        for(UserFieldAccess field:lists) 
+        {
+            ids.add(field.Durableid);
+        }
+        
+        //Get Field access for given user
+        List<UserFieldAccess> accesses=[SELECT DurableId,EntityDefinitionId,FieldDefinition.QualifiedApiName,FieldDefinitionId,Id,IsAccessible,IsCreatable,IsUpdatable,UserId FROM UserFieldAccess 
+                                        WHERE DurableId =:ids];
+        
+        //Create Access List
+        FieldAccess access;
+        for(UserFieldAccess field:accesses)
+        {
+            access=new FieldAccess();
+            access.Id=field.Id;
+            access.EntityDefinitionId=field.EntityDefinitionId;
+            access.FieldDefinitionId=field.FieldDefinitionId;
+            access.IsAccessible=field.IsAccessible;
+            access.IsUpdatable=field.IsUpdatable;
+            access.IsCreatable=field.IsCreatable;
+            access.FieldName=field.FieldDefinition.QualifiedApiName;
+            fields.add(access);
+        }
+        return fields;
+    }
+    
+    //Get access of any fields
+    @Auraenabled(cacheable=true)
+    public static List<FieldAccess> getFieldsAccess(string objectName,string fieldName, string userId)
+    {
+        List<FieldAccess> fields=new List<FieldAccess>();
+        //Map<Id,User> users=new Map<Id, User>([select id, name from User where id=:userId]);
+        
+        List<UserFieldAccess> lists=[SELECT Durableid FROM UserFieldAccess
+                                     WHERE FieldDefinition.EntityDefinition.QualifiedApiName=:objectName
+                                     AND FieldDefinition.QualifiedApiName=:fieldName
+                                     AND User.Id=:userId];
+        
+        List<string> ids=new List<string>(); 
+        for(UserFieldAccess field:lists) 
+        {
+            ids.add(field.Durableid);
+        }
+        //Get Field access for given user
+        List<UserFieldAccess> accesses=[SELECT DurableId,EntityDefinitionId,FieldDefinition.QualifiedApiName,FieldDefinitionId,Id,IsAccessible,IsCreatable,IsUpdatable,UserId FROM UserFieldAccess 
+                                        WHERE DurableId =:ids];
+        
+        //Create Access List
+        FieldAccess access;
+        for(UserFieldAccess field:accesses)
+        {
+            access=new FieldAccess();
+            access.Id=field.Id;
+            access.EntityDefinitionId=field.EntityDefinitionId;
+            access.FieldDefinitionId=field.FieldDefinitionId;
+            access.IsAccessible=field.IsAccessible;
+            access.IsUpdatable=field.IsUpdatable;
+            access.IsCreatable=field.IsCreatable;
+            access.FieldName=field.FieldDefinition.QualifiedApiName;
+            fields.add(access);
+        }
+        return fields;
+    }
+    
+    public class FieldWrap
+    {
+        @Auraenabled
+        public string Name{get;set;}
+        @Auraenabled
+        public string Label{get;set;}
+    }
+    
+    
+    public class FieldAccess
+    {
+        @Auraenabled
+        public string Id{get;set;}
+        @Auraenabled
+        public string EntityDefinitionId{get;set;}
+        @Auraenabled
+        public string FieldDefinitionId{get;set;}
+        @Auraenabled
+        public boolean IsAccessible{get;set;}
+        @Auraenabled
+        public boolean IsUpdatable{get;set;}
+        @Auraenabled
+        public boolean IsCreatable{get;set;}
+        @Auraenabled
+        public string FieldName{get;set;}
+    }
+}

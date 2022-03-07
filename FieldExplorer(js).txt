@@ -1,0 +1,327 @@
+import { LightningElement, track, wire,api} from 'lwc';
+import getObjects from '@salesforce/apex/FieldExplorerController.getObjects';
+import getFields from '@salesforce/apex/FieldExplorerController.getFields';
+import getEmails from '@salesforce/apex/FieldExplorerController.getEmails';
+import getObjectAccess from '@salesforce/apex/FieldExplorerController.getObjectAccess';
+import getFieldsAccess from '@salesforce/apex/FieldExplorerController.getFieldsAccess';
+import getOrgUsers from '@salesforce/apex/FieldExplorerController.getOrgUsers';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import OBJECT__C_FIELD from '@salesforce/schema/SchedulePlan__c.Object__c';
+import FIELD__C_FIELD from '@salesforce/schema/SchedulePlan__c.Field__c';
+import EMAIL1__C_FIELD from '@salesforce/schema/SchedulePlan__c.Email1__c';
+import getAccounts from '@salesforce/apex/AccountController1.getAccounts';
+
+/*const columnsDefs = [
+    {
+        label: 'EntityDefinitionId',
+        fieldName: 'EntityDefinitionId',
+        type: 'text',
+        sortable: true
+    },
+    {
+        label: 'FieldDefinitionId',
+        fieldName: 'FieldDefinitionId',
+        type: 'text',
+        sortable: true
+    },
+
+    {
+        label: 'FieldName',
+        fieldName: 'FieldName',
+        type: 'text',
+        sortable: true
+    },
+    {
+        label: 'IsAccessible',
+        fieldName: 'IsAccessible',
+        type: 'boolean',
+        sortable: true
+    },
+    {
+        label: 'IsUpdatable',
+        fieldName: 'IsUpdatable',
+        type: 'boolean',
+        sortable: true
+    },
+    {
+        label: 'IsCreatable',
+        fieldName: 'IsCreatable',
+        type: 'boolean',
+        sortable: true
+    }
+];*/
+
+export default class FieldAccessExplorer extends LightningElement {
+    @track objects = [];
+    @track fields = [];
+    @track users = [];
+    @track emails=[];
+    @track fieldsA = [];
+    @track fieldsB = [];
+  
+    //@api recordId;
+   
+   
+
+    @track field='';
+    @track objName='';
+    @track email='';
+    @track user='';
+    @track data;
+    @track value;
+    @track acc='';
+    @track acc1='';
+    @track acc2='';
+
+    //@track columns = columnsDefs;
+    ///
+    @api objectApiName;
+    @api recordId;
+    @wire(getRecord, { recordId: '$recordId', fields: [OBJECT__C_FIELD, FIELD__C_FIELD,EMAIL1__C_FIELD] })
+    SchedulePlan;
+    
+   @api
+    get object1() {
+       this.acc= getFieldValue(this.SchedulePlan.data, OBJECT__C_FIELD);
+       return this.acc;
+    }
+    set object1(value)
+    {
+        this.acc=value;
+    }
+    
+    @api
+    get field1() {
+        this.acc1= getFieldValue(this.SchedulePlan.data,  FIELD__C_FIELD);
+       return this.acc1;
+        
+    }
+    set field1(value)
+    {
+        this.acc1=value;
+    }
+    @api
+    get email1(){
+        
+         this.acc2=getFieldValue(this.SchedulePlan.data, EMAIL1__C_FIELD);
+         return this.acc2;
+    }
+    set email1(value)
+    {
+        this.acc2=value;
+    }
+    
+
+    ////
+    @api
+    get Object() {
+        return this.objName;
+        
+    }
+    @api
+    get Fields() {
+        return this.field;
+    }
+    @api
+    get Emails() {
+        return this.email;
+    }
+    set Object(value) {
+        this.objName = value;
+    }
+    set Fields(value) {
+        this.field = value;
+    }
+    set Emails(value) {
+        this.email = value;
+    }
+    @api
+    get Obj() {
+        return this.objects;
+    }
+    set Obj(value) {
+        this.objects = value;
+    }
+
+    connectedCallback()
+    {
+        let accd='';
+              
+            getAccounts({ recordId:this.recordId})
+            .then(result => {
+                accd=result;
+
+                getFields({ objectName:accd})
+                .then(result => {
+                    this.dataArray = result;
+                    let tempArray = [];
+                    let option=
+                        {
+                            label:'Please Select',
+                            value:''
+                        };
+                    tempArray.push(option);
+                    this.dataArray.forEach(function (element) {
+                        option=
+                        {
+                            label:element.Label,
+                            value:element.Name
+                        };
+                        tempArray.push(option);
+                    });
+                    this.fieldsA=tempArray;
+                    this.fieldsB=this.fieldsA;
+                })
+                .catch(error => {
+                    this.error = error;
+                });
+
+                getEmails({ objectName: accd})
+                .then(result => {
+                this.dataArray = result;
+                let tempArray = [];
+                let option=
+                    {
+                        label:'Please Select',
+                        value:''
+                    };
+                tempArray.push(option);
+                this.dataArray.forEach(function (element) {
+                    option=
+                    {
+                        label:element.Label,
+                        value:element.Name
+                    };
+                    tempArray.push(option);
+                });
+                this.emails=tempArray;
+            })
+            .catch(error => {
+                this.error = error;
+            });
+            })
+            .catch(error => {
+                this.error = error;
+            });
+    }
+    
+
+    @wire(getObjects)
+    wiredMethod({ error, data }) {
+        if (data) {
+            this.dataArray = data;
+            let tempArray = [];
+            this.dataArray.forEach(function (element) {
+                var option=
+                {
+                    label:element,
+                    value:element
+                };
+                tempArray.push(option);
+            });
+            this.objects=tempArray;
+        } else if (error) {
+            this.error = error;
+        }
+    } 
+    
+    handleObjectChange(event)
+    {   
+        const selectedOption = event.detail.value;  
+        this.objName=selectedOption;
+        getFields({ objectName: selectedOption})
+        .then(result => {
+            this.dataArray = result;
+            let tempArray = [];
+            let option=
+                {
+                    label:'Please Select',
+                    value:''
+                };
+            tempArray.push(option);
+            this.dataArray.forEach(function (element) {
+                option=
+                {
+                    label:element.Label,
+                    value:element.Name
+                };
+                tempArray.push(option);
+            });
+            this.fieldsB=tempArray;
+        })
+        .catch(error => {
+            this.error = error;
+        });
+        getEmails({ objectName: selectedOption})
+        .then(result => {
+            this.dataArray = result;
+            let tempArray = [];
+            let option=
+                {
+                    label:'Please Select',
+                    value:''
+                };
+            tempArray.push(option);
+            this.dataArray.forEach(function (element) {
+                option=
+                {
+                    label:element.Label,
+                    value:element.Name
+                };
+                tempArray.push(option);
+            });
+            this.emails=tempArray;
+        })
+        .catch(error => {
+            this.error = error;
+        });
+        
+        //Funct();
+        //MessageBox.Show("Please select a value");
+        
+    }
+   /* Funct()
+    {
+        if (string.IsNullOrEmpty(comboBox2.Text) ||string.IsNullOrEmpty(comboBox3.Text)  )
+        {
+            MessageBox.Show("Please select a value");
+            return;           
+        }
+    }*/
+    handleEmailChange(event){
+        const selectedOption = event.detail.value;  
+        this.email=selectedOption;
+    }
+    handleFieldChange(event){
+        const selectedOption = event.detail.value;  
+        this.field=selectedOption;
+    }
+    handleUserChange(event){
+        const selectedOption = event.detail.value;  
+        this.user=selectedOption;
+    }
+    handleClick(){       
+        if(this.field==='')
+        {
+            getObjectAccess({ objectName: this.objName,userId:this.user})
+            .then(result => {
+                this.data=result;
+            })
+            .catch(error => {
+                console.log('Error'+ JSON.stringify(error));
+                this.error = error;
+            });
+        }
+        else
+        {
+            getFieldsAccess({ objectName: this.objName,fieldName:this.field,userId:this.user})
+            .then(result => {
+                this.data=result;
+            })
+            .catch(error => {
+                console.log('Error'+ JSON.stringify(error));
+                this.error = error;
+            });
+        }
+    }
+}
